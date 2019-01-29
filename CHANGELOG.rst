@@ -1,3 +1,6 @@
+Changelog
+=========
+
 0.19.0 (2020-02-28)
 -------------------
 - Add zipkin_span.add_annotation() method
