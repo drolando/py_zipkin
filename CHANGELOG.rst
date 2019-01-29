@@ -1,3 +1,6 @@
+Changelog
+=========
+
 0.17.1 (2019-02-05)
 -------------------
 - Ignore transport_handler overrides in an inner span since that causes

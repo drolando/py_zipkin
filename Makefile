@@ -14,12 +14,18 @@ install:
 install-hooks:
 	tox -e pre-commit -- install -f --install-hooks
 
-test:
+test: install-hooks
 	tox
 
+.PHONY: tests
 tests: test
+
+.PHONY: docs
+docs:
+	tox -e docs
 
 clean:
 	@rm -rf .tox build dist *.egg-info
 	find . -name '*.pyc' -delete
 	find . -name '__pycache__' -delete
+	@rm -rf docs/build
