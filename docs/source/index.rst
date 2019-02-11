@@ -25,4 +25,7 @@ Install
    transport
    encoding
    multithreading
+   DEPRECATIONS
    CHANGELOG
+
+   Gihub repo <https://github.com/Yelp/py_zipkin>

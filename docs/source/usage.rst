@@ -102,7 +102,7 @@ Server side
 
 .. autoclass:: py_zipkin.zipkin.ZipkinAttrs
 
-.. autoclass:: py_zipkin.encoding.SpanBuilder
+.. autoclass:: py_zipkin.encoding.Span
    :members:
 
 .. autoclass:: py_zipkin.encoding._helpers.Endpoint
