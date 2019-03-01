@@ -3,3 +3,4 @@ mock
 ordereddict
 pytest
 pytest-benchmark[histogram]
+requests

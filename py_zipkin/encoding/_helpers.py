@@ -133,6 +133,8 @@ class Span(object):
             # server side annotations.
             for ann in _DROP_ANNOTATIONS_BY_KIND[self.kind]:
                 del full_annotations[ann]
+        else:
+            full_annotations = {}
 
         # Add user-defined annotations. We write them in full_annotations
         # instead of the opposite so that user annotations will override

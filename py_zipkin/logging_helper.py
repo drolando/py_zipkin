@@ -113,17 +113,19 @@ class ZipkinLoggingContext(object):
             if self.add_logging_annotation:
                 annotations[LOGGING_END_KEY] = time.time()
 
+            kind = Kind.CLIENT if self.client_context else Kind.SERVER
+
             span_sender.add_span(Span(
                 trace_id=self.zipkin_attrs.trace_id,
                 name=self.span_name,
                 parent_id=self.zipkin_attrs.parent_span_id,
                 span_id=self.zipkin_attrs.span_id,
-                kind=Kind.CLIENT if self.client_context else Kind.SERVER,
+                kind=kind,
                 timestamp=self.start_timestamp,
                 duration=end_timestamp - self.start_timestamp,
                 local_endpoint=self.endpoint,
                 remote_endpoint=self.remote_endpoint,
-                shared=not self.report_root_timestamp,
+                shared=kind == Kind.SERVER and not self.report_root_timestamp,
                 annotations=annotations,
                 tags=self.tags,
             ))

@@ -3,6 +3,12 @@
 
 class BaseTransportHandler(object):
 
+    def __init__(self):
+        self.encoding = None
+
+    def _configure(self, encoding):
+        self.encoding = encoding
+
     def get_max_payload_bytes(self):  # pragma: no cover
         """Returns the maximum payload size for this transport.
 
