@@ -2,30 +2,33 @@
 import socket
 import struct
 
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
+
+import py_zipkin.encoding
 from py_zipkin.encoding._types import Kind
 from py_zipkin.util import unsigned_hex_to_signed_int
 try:
-    from py_zipkin.encoding.protobuf import zipkin_pb2
+    from py_zipkin.encoding.protobuf import zipkin_pb2  # type: ignore
 except ImportError:  # pragma: no cover
-    zipkin_pb2 = None
+    zipkin_pb2 = None  # type: ignore
 
 
-def installed():
+def installed():  # type: () -> bool
     """Checks whether the protobud library is installed and can be used.
 
     :return: True if everything's fine, False otherwise
-    :rtype: bool
     """
     return zipkin_pb2 is not None
 
 
-def encode_pb_list(pb_spans):
+def encode_pb_list(pb_spans):  # type: (List[zipkin_pb2.Span]) -> bytes
     """Encode list of protobuf Spans to binary.
 
     :param pb_spans: list of protobuf Spans.
-    :type pb_spans: list of zipkin_pb2.Span
     :return: encoded list.
-    :rtype: bytes
     """
     pb_list = zipkin_pb2.ListOfSpans()
     pb_list.spans.extend(pb_spans)
@@ -33,19 +36,18 @@ def encode_pb_list(pb_spans):
 
 
 def create_protobuf_span(span):
+    # type: (py_zipkin.encoding.Span) -> zipkin_pb2.Span
     """Converts a py_zipkin Span in a protobuf Span.
 
     :param span: py_zipkin Span to convert.
-    :type span: py_zipkin.encoding.Span
     :return: protobuf's Span
-    :rtype: zipkin_pb2.Span
     """
 
     # Protobuf's composite types (i.e. Span's local_endpoint) are immutable.
     # So we can't create a zipkin_pb2.Span here and then set the appropriate
     # fields since `pb_span.local_endpoint = zipkin_pb2.Endpoint` fails.
     # Instead we just create the kwargs and pass them in to the Span constructor.
-    pb_kwargs = {}
+    pb_kwargs = {}  # type: Dict[str, Any]
 
     pb_kwargs['trace_id'] = _hex_to_bytes(span.trace_id)
 
@@ -86,13 +88,11 @@ def create_protobuf_span(span):
     return zipkin_pb2.Span(**pb_kwargs)
 
 
-def _hex_to_bytes(hex_id):
+def _hex_to_bytes(hex_id):  # type: (str) -> bytes
     """Encodes to hexadecimal ids to big-endian binary.
 
     :param hex_id: hexadecimal id to encode.
-    :type hex_id: str
     :return: binary representation.
-    :type: bytes
     """
     if len(hex_id) <= 16:
         int_id = unsigned_hex_to_signed_int(hex_id)
@@ -113,12 +113,11 @@ def _hex_to_bytes(hex_id):
 
 
 def _get_protobuf_kind(kind):
+    # type: (py_zipkin.Kind) -> Optional[zipkin_pb2.Span.Kind]
     """Converts py_zipkin's Kind to Protobuf's Kind.
 
     :param kind: py_zipkin's Kind.
-    :type kind: py_zipkin.Kind
     :return: correcponding protobuf's kind value.
-    :rtype: zipkin_pb2.Span.Kind
     """
     if kind == Kind.CLIENT:
         return zipkin_pb2.Span.CLIENT
@@ -132,12 +131,11 @@ def _get_protobuf_kind(kind):
 
 
 def _convert_endpoint(endpoint):
+    # type: (py_zipkin.encoding.Endpoint) -> zipkin_pb2.Endpoint
     """Converts py_zipkin's Endpoint to Protobuf's Endpoint.
 
     :param endpoint: py_zipkins' endpoint to convert.
-    :type endpoint: py_zipkin.encoding.Endpoint
     :return: corresponding protobuf's endpoint.
-    :rtype: zipkin_pb2.Endpoint
     """
     pb_endpoint = zipkin_pb2.Endpoint()
 
@@ -154,6 +152,7 @@ def _convert_endpoint(endpoint):
 
 
 def _convert_annotations(annotations):
+    # type: (Dict[str, float]) -> List[zipkin_pb2.Annotation]
     """Converts py_zipkin's annotations dict to protobuf.
 
     :param annotations: annotations dict.

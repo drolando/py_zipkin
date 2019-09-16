@@ -8,11 +8,16 @@ from thriftpy2.protocol.binary import read_list_begin
 from thriftpy2.protocol.binary import TBinaryProtocol
 from thriftpy2.thrift import TType
 from thriftpy2.transport import TMemoryBuffer
+from typing import List
+from typing import Optional
+from typing import Tuple
 
 from py_zipkin.encoding._helpers import Endpoint
 from py_zipkin.encoding._helpers import Span
+from py_zipkin.encoding._types import Annotations
 from py_zipkin.encoding._types import Encoding
 from py_zipkin.encoding._types import Kind
+from py_zipkin.encoding._types import Tags
 from py_zipkin.exception import ZipkinError
 from py_zipkin.thrift import zipkin_core
 
@@ -22,13 +27,11 @@ _DROP_ANNOTATIONS = {'cs', 'sr', 'ss', 'cr'}
 log = logging.getLogger('py_zipkin.encoding')
 
 
-def get_decoder(encoding):
+def get_decoder(encoding):  # type: (Encoding) -> IDecoder
     """Creates encoder object for the given encoding.
 
     :param encoding: desired output encoding protocol
-    :type encoding: Encoding
     :return: corresponding IEncoder object
-    :rtype: IEncoder
     """
     if encoding == Encoding.V1_THRIFT:
         return _V1ThriftDecoder()
@@ -44,26 +47,22 @@ def get_decoder(encoding):
 class IDecoder(object):
     """Decoder interface."""
 
-    def decode_spans(self, spans):
+    def decode_spans(self, spans):  # type: (bytes) -> List[Span]
         """Decodes an encoded list of spans.
 
         :param spans: encoded list of spans
-        :type spans: bytes
         :return: list of spans
-        :rtype: list of Span
         """
         raise NotImplementedError()
 
 
 class _V1ThriftDecoder(IDecoder):
 
-    def decode_spans(self, spans):
+    def decode_spans(self, spans):  # type: (bytes) -> List[Span]
         """Decodes an encoded list of spans.
 
         :param spans: encoded list of spans
-        :type spans: bytes
         :return: list of spans
-        :rtype: list of Span
         """
         decoded_spans = []
         transport = TMemoryBuffer(spans)
@@ -80,12 +79,11 @@ class _V1ThriftDecoder(IDecoder):
         return decoded_spans
 
     def _convert_from_thrift_endpoint(self, thrift_endpoint):
+        # type: (zipkin_core.Endpoint) -> Endpoint
         """Accepts a thrift decoded endpoint and converts it to an Endpoint.
 
         :param thrift_endpoint: thrift encoded endpoint
-        :type thrift_endpoint: thrift endpoint
         :returns: decoded endpoint
-        :rtype: Encoding
         """
         ipv4 = None
         ipv6 = None
@@ -107,18 +105,21 @@ class _V1ThriftDecoder(IDecoder):
             port=port,
         )
 
-    def _decode_thrift_annotations(self, thrift_annotations):
+    def _decode_thrift_annotations(
+        self,
+        thrift_annotations,  # type: List[zipkin_core.Annotation]
+    ):
+        # type: (...) -> Tuple[Annotations, Optional[Endpoint], Kind, float, float]
         """Accepts a thrift annotation and converts it to a v1 annotation.
 
         :param thrift_annotations: list of thrift annotations.
-        :type thrift_annotations: list of zipkin_core.Span.Annotation
         :returns: (annotations, local_endpoint, kind)
         """
-        local_endpoint = None
+        local_endpoint = None  # type: Optional[Endpoint]
         kind = Kind.LOCAL
-        all_annotations = {}
-        timestamp = None
-        duration = None
+        all_annotations = {}  # type: Annotations
+        timestamp = 0  # type: float
+        duration = 0  # type: float
 
         for thrift_annotation in thrift_annotations:
             all_annotations[thrift_annotation.value] = thrift_annotation.timestamp
@@ -143,11 +144,14 @@ class _V1ThriftDecoder(IDecoder):
 
         return annotations, local_endpoint, kind, timestamp, duration
 
-    def _convert_from_thrift_binary_annotations(self, thrift_binary_annotations):
+    def _convert_from_thrift_binary_annotations(
+        self,
+        thrift_binary_annotations,  # type: List[zipkin_core.BinaryAnnotation]
+    ):  # type: (...) -> Tuple[Tags, Optional[Endpoint], Optional[Endpoint]]
         """Accepts a thrift decoded binary annotation and converts it
         to a v1 binary annotation.
         """
-        tags = {}
+        tags = {}  # type: Tags
         local_endpoint = None
         remote_endpoint = None
 
@@ -177,12 +181,12 @@ class _V1ThriftDecoder(IDecoder):
 
         return tags, local_endpoint, remote_endpoint
 
-    def seconds(self, us):
+    def seconds(self, us):  # type: (Optional[float]) -> float
         if us is None:
-            return None
+            return 0
         return round(float(us) / 1000 / 1000, 6)
 
-    def _decode_thrift_span(self, thrift_span):
+    def _decode_thrift_span(self, thrift_span):  # type: (zipkin_core.Span) -> Span
         """Decodes a thrift span.
 
         :param thrift_span: thrift span
@@ -192,12 +196,12 @@ class _V1ThriftDecoder(IDecoder):
         """
         parent_id = None
         local_endpoint = None
-        annotations = {}
-        tags = {}
+        annotations = {}  # type: Annotations
+        tags = {}  # type: Tags
         kind = Kind.LOCAL
         remote_endpoint = None
-        timestamp = None
-        duration = None
+        timestamp = 0  # type: float
+        duration = 0  # type: float
 
         if thrift_span.parent_id:
             parent_id = self._convert_unsigned_long_to_lower_hex(
@@ -219,6 +223,9 @@ class _V1ThriftDecoder(IDecoder):
             thrift_span.trace_id_high,
         )
 
+        if local_endpoint is None:
+            raise ZipkinError('no local endpoint')
+
         return Span(
             trace_id=trace_id,
             name=thrift_span.name,
@@ -235,14 +242,13 @@ class _V1ThriftDecoder(IDecoder):
         )
 
     def _convert_trace_id_to_string(self, trace_id, trace_id_high=None):
+        # type: (int, int) -> str
         """
         Converts the provided traceId hex value with optional high bits
         to a string.
 
         :param trace_id: the value of the trace ID
-        :type trace_id: int
         :param trace_id_high: the high bits of the trace ID
-        :type trace_id: int
         :returns: trace_id_high + trace_id as a string
         """
         if trace_id_high is not None:
@@ -255,12 +261,11 @@ class _V1ThriftDecoder(IDecoder):
         self._write_hex_long(result, 0, trace_id)
         return result.decode("utf8")
 
-    def _convert_unsigned_long_to_lower_hex(self, value):
+    def _convert_unsigned_long_to_lower_hex(self, value):  # type: (int) -> str
         """
         Converts the provided unsigned long value to a hex string.
 
         :param value: the value to convert
-        :type value: unsigned long
         :returns: value as a hex string
         """
         result = bytearray(16)
@@ -268,15 +273,13 @@ class _V1ThriftDecoder(IDecoder):
         return result.decode("utf8")
 
     def _write_hex_long(self, data, pos, value):
+        # type: (bytearray, int, int) -> None
         """
         Writes an unsigned long value across a byte array.
 
         :param data: the buffer to write the value to
-        :type data: bytearray
         :param pos: the starting position
-        :type pos: int
         :param value: the value to write
-        :type value: unsigned long
         """
         self._write_hex_byte(data, pos + 0, (value >> 56) & 0xff)
         self._write_hex_byte(data, pos + 2, (value >> 48) & 0xff)
@@ -288,5 +291,6 @@ class _V1ThriftDecoder(IDecoder):
         self._write_hex_byte(data, pos + 14, (value & 0xff))
 
     def _write_hex_byte(self, data, pos, byte):
+        # type: (bytearray, int, int) -> None
         data[pos + 0] = ord(_HEX_DIGITS[int((byte >> 4) & 0xf)])
         data[pos + 1] = ord(_HEX_DIGITS[int(byte & 0xf)])

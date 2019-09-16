@@ -1,12 +1,17 @@
 # -*- coding: utf-8 -*-
 import logging
 
+from typing import List
+from typing import Optional
+
 from py_zipkin.storage import get_default_tracer
+from py_zipkin.storage import SpanStorage
+from py_zipkin.zipkin import ZipkinAttrs
 
 log = logging.getLogger('py_zipkin.thread_local')
 
 
-def get_thread_local_zipkin_attrs():
+def get_thread_local_zipkin_attrs():  # type: () -> List[ZipkinAttrs]
     """A wrapper to return _thread_local.zipkin_attrs
 
     Returns a list of ZipkinAttrs objects, used for intra-process context
@@ -17,14 +22,13 @@ def get_thread_local_zipkin_attrs():
        get_thread_local_zipkin_attrs will be removed in version 1.0.
 
     :returns: list that may contain zipkin attribute tuples
-    :rtype: list
     """
     log.warning('get_thread_local_zipkin_attrs is deprecated. See DEPRECATIONS.rst'
                 ' for details on how to migrate to using Tracer.')
     return get_default_tracer()._context_stack._storage
 
 
-def get_thread_local_span_storage():
+def get_thread_local_span_storage():  # type: () -> SpanStorage
     """A wrapper to return _thread_local.span_storage
 
     Returns a SpanStorage object used to temporarily store all spans created in
@@ -36,14 +40,13 @@ def get_thread_local_span_storage():
        get_thread_local_span_storage will be removed in version 1.0.
 
     :returns: SpanStore object containing all non-root spans.
-    :rtype: py_zipkin.storage.SpanStore
     """
     log.warning('get_thread_local_span_storage is deprecated. See DEPRECATIONS.rst'
                 ' for details on how to migrate to using Tracer.')
     return get_default_tracer()._span_storage
 
 
-def get_zipkin_attrs():
+def get_zipkin_attrs():  # type: () -> Optional[ZipkinAttrs]
     """Get the topmost level zipkin attributes stored.
 
     .. deprecated::
@@ -51,7 +54,6 @@ def get_zipkin_attrs():
        get_zipkin_attrs will be removed in version 1.0.
 
     :returns: tuple containing zipkin attrs
-    :rtype: :class:`zipkin.ZipkinAttrs`
     """
     from py_zipkin.storage import ThreadLocalStack
     log.warning('get_zipkin_attrs is deprecated. See DEPRECATIONS.rst for'
@@ -59,7 +61,7 @@ def get_zipkin_attrs():
     return ThreadLocalStack().get()
 
 
-def pop_zipkin_attrs():
+def pop_zipkin_attrs():  # type: () -> Optional[ZipkinAttrs]
     """Pop the topmost level zipkin attributes, if present.
 
     .. deprecated::
@@ -67,7 +69,6 @@ def pop_zipkin_attrs():
        pop_zipkin_attrs will be removed in version 1.0.
 
     :returns: tuple containing zipkin attrs
-    :rtype: :class:`zipkin.ZipkinAttrs`
     """
     from py_zipkin.storage import ThreadLocalStack
     log.warning('pop_zipkin_attrs is deprecated. See DEPRECATIONS.rst for'
@@ -75,7 +76,7 @@ def pop_zipkin_attrs():
     return ThreadLocalStack().pop()
 
 
-def push_zipkin_attrs(zipkin_attr):
+def push_zipkin_attrs(zipkin_attr):  # type: (ZipkinAttrs) -> None
     """Stores the zipkin attributes to thread local.
 
     .. deprecated::

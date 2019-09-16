@@ -1,23 +1,35 @@
 # -*- coding: utf-8 -*-
 import socket
-from collections import namedtuple
 from collections import OrderedDict
+
+from typing import Dict
+from typing import NamedTuple
+from typing import Optional
 
 from py_zipkin.encoding._types import Kind
 from py_zipkin.exception import ZipkinError
 
 
-Endpoint = namedtuple(
-    'Endpoint',
-    ['service_name', 'ipv4', 'ipv6', 'port'],
-)
+Endpoint = NamedTuple('Endpoint', [
+    ('service_name', str),
+    ('ipv4', Optional[str]),
+    ('ipv6', Optional[str]),
+    ('port', Optional[int]),
+])
 
 
-_V1Span = namedtuple(
-    'V1Span',
-    ['trace_id', 'name', 'parent_id', 'id', 'timestamp', 'duration', 'endpoint',
-     'annotations', 'binary_annotations', 'remote_endpoint'],
-)
+_V1Span = NamedTuple('V1Span', [
+    ('trace_id', str),
+    ('name', str),
+    ('parent_id', Optional[str]),
+    ('id', str),
+    ('timestamp', Optional[float]),
+    ('duration', Optional[float]),
+    ('endpoint', Endpoint),
+    ('annotations', Dict[str, float]),
+    ('binary_annotations', Dict[str, str]),
+    ('remote_endpoint', Optional[Endpoint]),
+])
 
 
 _DROP_ANNOTATIONS_BY_KIND = {
@@ -31,19 +43,19 @@ class Span(object):
 
     def __init__(
         self,
-        trace_id,
-        name,
-        parent_id,
-        span_id,
-        kind,
-        timestamp,
-        duration,
-        local_endpoint=None,
-        remote_endpoint=None,
-        debug=False,
-        shared=False,
-        annotations=None,
-        tags=None,
+        trace_id,  # type: str
+        name,  # type: str
+        parent_id,  # type: Optional[str]
+        span_id,  # type: str
+        kind,  # type: Kind
+        timestamp,  # type: float
+        duration,  # type: float
+        local_endpoint,  # type: Endpoint
+        remote_endpoint=None,  # type: Optional[Endpoint]
+        debug=False,  # type: bool
+        shared=False,  # type: bool
+        annotations=None,  # type: Dict[str, float]
+        tags=None,  # type: Dict[str, str]
     ):
         """Creates a new Span.
 
@@ -103,18 +115,21 @@ class Span(object):
                 'Invalid remote_endpoint value. Must be of type Endpoint.')
 
     def __eq__(self, other):  # pragma: no cover
+        # type: (object) -> bool
         """Compare function to help assert span1 == span2 in py3"""
         return self.__dict__ == other.__dict__
 
     def __cmp__(self, other):  # pragma: no cover
+        # type: (object) -> bool
         """Compare function to help assert span1 == span2 in py2"""
         return self.__dict__ == other.__dict__
 
     def __str__(self):  # pragma: no cover
+        # type: () -> str
         """Compare function to nicely print Span rather than just the pointer"""
         return str(self.__dict__)
 
-    def build_v1_span(self):
+    def build_v1_span(self):  # type: () -> _V1Span
         """Builds and returns a V1 Span.
 
         :return: newly generated _V1Span
@@ -153,25 +168,24 @@ class Span(object):
         )
 
 
-def create_endpoint(port=None, service_name=None, host=None, use_defaults=True):
+def create_endpoint(
+    port=None,  # type: int
+    service_name='unknown',  # type: str
+    host=None,  # type: str
+    use_defaults=True,  # type: bool
+):  # type: (...) -> Endpoint
     """Creates a new Endpoint object.
 
     :param port: TCP/UDP port. Defaults to 0.
-    :type port: int
     :param service_name: service name as a str. Defaults to 'unknown'.
-    :type service_name: str
     :param host: ipv4 or ipv6 address of the host. Defaults to the
     current host ip.
-    :type host: str
     :param use_defaults: whether to use defaults.
-    :type use_defaults: bool
     :returns: zipkin Endpoint object
     """
     if use_defaults:
         if port is None:
             port = 0
-        if service_name is None:
-            service_name = 'unknown'
         if host is None:
             try:
                 host = socket.gethostbyname(socket.gethostname())
@@ -204,6 +218,7 @@ def create_endpoint(port=None, service_name=None, host=None, use_defaults=True):
 
 
 def copy_endpoint_with_new_service_name(endpoint, new_service_name):
+    # type: (Endpoint, str) -> Endpoint
     """Creates a copy of a given endpoint with a new service name.
 
     :param endpoint: existing Endpoint object

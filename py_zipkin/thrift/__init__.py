@@ -9,6 +9,7 @@ from thriftpy2.protocol.binary import write_list_begin
 from thriftpy2.thrift import TType
 from thriftpy2.transport import TMemoryBuffer
 
+from py_zipkin.encoding._helpers import Endpoint
 from py_zipkin.util import unsigned_hex_to_signed_int
 
 
@@ -17,8 +18,6 @@ zipkin_core = thriftpy2.load(thrift_filepath, module_name="zipkinCore_thrift")
 
 SERVER_ADDR_VAL = '\x01'
 LIST_HEADER_SIZE = 5  # size in bytes of the encoded list header
-
-dummy_endpoint = zipkin_core.Endpoint()
 
 
 def create_annotation(timestamp, value, host):
@@ -34,7 +33,12 @@ def create_annotation(timestamp, value, host):
     return zipkin_core.Annotation(timestamp=timestamp, value=value, host=host)
 
 
-def create_binary_annotation(key, value, annotation_type, host):
+def create_binary_annotation(
+    key,  # type: str
+    value,  # type: str
+    annotation_type,  # type: zipkin_core.AnnotationType
+    host,  # type: Endpoint
+):  # type: (...) -> zipkin_core.BinaryAnnotation
     """
     Create a zipkin binary annotation object
 
@@ -54,6 +58,7 @@ def create_binary_annotation(key, value, annotation_type, host):
 
 
 def create_endpoint(port=0, service_name='unknown', ipv4=None, ipv6=None):
+    # type: (int, str, str, str) -> zipkin_core.Endpoint
     """Create a zipkin Endpoint object.
 
     An Endpoint object holds information about the network context of a span.

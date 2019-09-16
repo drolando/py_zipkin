@@ -4,7 +4,7 @@ import struct
 import time
 
 
-def generate_random_64bit_string():
+def generate_random_64bit_string():  # type: () -> str
     """Returns a 64 bit UTF-8 encoded string. In the interests of simplicity,
     this is always cast to a `str` instead of (in py2 land) a unicode string.
     Certain clients (I'm looking at you, Twisted) don't enjoy unicode headers.
@@ -14,7 +14,7 @@ def generate_random_64bit_string():
     return '{:016x}'.format(random.getrandbits(64))
 
 
-def generate_random_128bit_string():
+def generate_random_128bit_string():  # type: () -> str
     """Returns a 128 bit UTF-8 encoded string. Follows the same conventions
     as generate_random_64bit_string().
 
@@ -29,7 +29,7 @@ def generate_random_128bit_string():
     return '{:032x}'.format((t << 96) | lower_96)
 
 
-def unsigned_hex_to_signed_int(hex_string):
+def unsigned_hex_to_signed_int(hex_string):  # type: (str) -> int
     """Converts a 64-bit hex string to a signed int value.
 
     This is due to the fact that Apache Thrift only has signed values.
@@ -44,7 +44,7 @@ def unsigned_hex_to_signed_int(hex_string):
     return struct.unpack('q', struct.pack('Q', int(hex_string, 16)))[0]
 
 
-def signed_int_to_unsigned_hex(signed_int):
+def signed_int_to_unsigned_hex(signed_int):  # type: (int) -> str
     """Converts a signed int value to a 64-bit hex string.
 
     Examples:

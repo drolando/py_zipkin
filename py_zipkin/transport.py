@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
+from typing import Optional
 
 
 class BaseTransportHandler(object):
 
     def get_max_payload_bytes(self):  # pragma: no cover
+        # type: () -> Optional[int]
         """Returns the maximum payload size for this transport.
 
         Most transports have a maximum packet size that can be sent. For example,
@@ -19,6 +21,7 @@ class BaseTransportHandler(object):
         raise NotImplementedError('get_max_payload_bytes is not implemented')
 
     def send(self, payload):  # pragma: no cover
+        # type: (bytes) -> None
         """Sends the encoded payload over the transport.
 
         :argument payload: encoded list of spans.
@@ -26,6 +29,7 @@ class BaseTransportHandler(object):
         raise NotImplementedError('send is not implemented')
 
     def __call__(self, payload):
+        # type: (bytes) -> None
         """Internal wrapper around `send`. Do not override.
 
         Mostly used to keep backward compatibility with older transports

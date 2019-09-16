@@ -24,10 +24,11 @@ setup(
     long_description='\n\n'.join((read('README.md'), read('CHANGELOG.rst'))),
     long_description_content_type="text/markdown",
     packages=find_packages(exclude=('tests*', 'testing*', 'tools*')),
-    package_data={'': ['*.thrift']},
+    package_data={'': ['*.thrift', '*.pyi', 'py.typed']},
     install_requires=[
         'six',
         'thriftpy2>=0.4.0',
+        'typing',
     ],
     extras_require={
         ':python_version=="2.7"': ['enum34'],
@@ -45,4 +46,5 @@ setup(
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
     ],
+    zip_safe=False,
 )

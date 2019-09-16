@@ -1,12 +1,24 @@
 # -*- coding: utf-8 -*-
 import os
 import time
+from types import TracebackType
+
+from typing import Callable
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Type
 
 from py_zipkin import Kind
 from py_zipkin.encoding._encoders import get_encoder
+from py_zipkin.encoding._encoders import IEncoder
 from py_zipkin.encoding._helpers import copy_endpoint_with_new_service_name
+from py_zipkin.encoding._helpers import Endpoint
 from py_zipkin.encoding._helpers import Span
+from py_zipkin.encoding._types import Encoding
 from py_zipkin.exception import ZipkinError
+from py_zipkin.storage import Tracer
+from py_zipkin.storage import ZipkinAttrs
 from py_zipkin.transport import BaseTransportHandler
 
 
@@ -24,20 +36,20 @@ class ZipkinLoggingContext(object):
 
     def __init__(
         self,
-        zipkin_attrs,
-        endpoint,
-        span_name,
-        transport_handler,
-        report_root_timestamp,
-        get_tracer,
-        service_name,
-        binary_annotations=None,
-        add_logging_annotation=False,
-        client_context=False,
-        max_span_batch_size=None,
-        firehose_handler=None,
-        encoding=None,
-    ):
+        zipkin_attrs,  # type: ZipkinAttrs
+        endpoint,  # type: Endpoint
+        span_name,  # type: str
+        transport_handler,  # type: BaseTransportHandler
+        report_root_timestamp,  # type: bool
+        get_tracer,  # type: Callable[[], Tracer]
+        service_name,  # type: str
+        binary_annotations=None,  # type: Optional[Dict[str, str]]
+        add_logging_annotation=False,  # type: bool
+        client_context=False,  # type: bool
+        max_span_batch_size=None,  # type: Optional[int]
+        firehose_handler=None,  # type: Optional[BaseTransportHandler]
+        encoding=Encoding.V1_THRIFT,  # type: Encoding
+    ):  # type: (...) -> None
         self.zipkin_attrs = zipkin_attrs
         self.endpoint = endpoint
         self.span_name = span_name
@@ -52,23 +64,23 @@ class ZipkinLoggingContext(object):
         self.max_span_batch_size = max_span_batch_size
         self.firehose_handler = firehose_handler
 
-        self.remote_endpoint = None
+        self.remote_endpoint = None  # type: Optional[Endpoint]
         self.encoder = get_encoder(encoding)
 
-    def start(self):
+    def start(self):  # type: () -> ZipkinLoggingContext
         """Actions to be taken before request is handled."""
 
         # Record the start timestamp.
         self.start_timestamp = time.time()
         return self
 
-    def stop(self):
+    def stop(self):  # type: () -> None
         """Actions to be taken post request handling.
         """
 
         self.emit_spans()
 
-    def emit_spans(self):
+    def emit_spans(self):  # type: () -> None
         """Main function to log all the annotations stored during the entire
         request. This is done if the request is sampled and the response was
         a success. It also logs the service (`ss` and `sr`) or the client
@@ -96,6 +108,7 @@ class ZipkinLoggingContext(object):
         self._get_tracer().clear()
 
     def _emit_spans_with_span_sender(self, span_sender):
+        # type: (ZipkinBatchSender) -> None
         with span_sender:
             end_timestamp = time.time()
 
@@ -134,6 +147,7 @@ class ZipkinBatchSender(object):
     MAX_PORTION_SIZE = 100
 
     def __init__(self, transport_handler, max_portion_size, encoder):
+        # type: (BaseTransportHandler, Optional[int], IEncoder) -> None
         self.transport_handler = transport_handler
         self.max_portion_size = max_portion_size or self.MAX_PORTION_SIZE
         self.encoder = encoder
@@ -143,12 +157,17 @@ class ZipkinBatchSender(object):
         else:
             self.max_payload_bytes = None
 
-    def __enter__(self):
+    def __enter__(self):  # type: () -> ZipkinBatchSender
         self._reset_queue()
         return self
 
-    def __exit__(self, _exc_type, _exc_value, _exc_traceback):
-        if any((_exc_type, _exc_value, _exc_traceback)):
+    def __exit__(
+        self,
+        _exc_type,  # type: Optional[Type[BaseException]]
+        _exc_value,  # type: Optional[BaseException]
+        _exc_traceback,  # type: Optional[TracebackType]
+    ):  # type: (...) -> None
+        if _exc_type and _exc_value and _exc_traceback:
             filename = os.path.split(_exc_traceback.tb_frame.f_code.co_filename)[1]
             error = '({0}:{1}) {2}: {3}'.format(
                 filename,
@@ -160,11 +179,11 @@ class ZipkinBatchSender(object):
         else:
             self.flush()
 
-    def _reset_queue(self):
-        self.queue = []
+    def _reset_queue(self):  # type: () -> None
+        self.queue = []  # type: List[bytes]
         self.current_size = 0
 
-    def add_span(self, internal_span):
+    def add_span(self, internal_span):  # type: (Span) -> None
         encoded_span = self.encoder.encode_span(internal_span)
 
         # If we've already reached the max batch size or the new span doesn't
@@ -186,7 +205,7 @@ class ZipkinBatchSender(object):
         self.queue.append(encoded_span)
         self.current_size += len(encoded_span)
 
-    def flush(self):
+    def flush(self):  # type: () -> None
         if self.transport_handler and len(self.queue) > 0:
 
             message = self.encoder.encode_queue(self.queue)

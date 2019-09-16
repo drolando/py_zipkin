@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+from typing import List
+from typing import Optional
+
 from py_zipkin.transport import BaseTransportHandler
 
 
@@ -27,7 +31,7 @@ class MockTransportHandler(BaseTransportHandler):
         assert decoded_spans == [{}]
     """
 
-    def __init__(self, max_payload_bytes=None):
+    def __init__(self, max_payload_bytes=None):  # type: (Optional[int]) -> None
         """Creates a new MockTransportHandler.
 
         :param max_payload_bytes: max payload size in bytes. You often don't
@@ -36,18 +40,17 @@ class MockTransportHandler(BaseTransportHandler):
         :type max_payload_bytes: int
         """
         self.max_payload_bytes = max_payload_bytes
-        self.payloads = []
+        self.payloads = []  # type: List[bytes]
 
-    def send(self, payload):
+    def send(self, payload):  # type: (bytes) -> None
         """Overrides the real send method. Should not be called directly."""
         self.payloads.append(payload)
-        return payload
 
-    def get_max_payload_bytes(self):
+    def get_max_payload_bytes(self):  # type: () -> Optional[int]
         """Overrides the real method. Should not be called directly."""
         return self.max_payload_bytes
 
-    def get_payloads(self):
+    def get_payloads(self):  # type: () -> List[bytes]
         """Returns the encoded spans that were sent.
 
         Spans are batched before being sent, so most of the time the returned

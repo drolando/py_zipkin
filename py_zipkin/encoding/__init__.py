@@ -2,6 +2,7 @@
 import json
 
 import six
+from typing import Optional
 
 from py_zipkin.encoding._decoders import get_decoder
 from py_zipkin.encoding._encoders import get_encoder
@@ -13,16 +14,14 @@ from py_zipkin.exception import ZipkinError
 _V2_ATTRIBUTES = ["tags", "localEndpoint", "remoteEndpoint", "shared", "kind"]
 
 
-def detect_span_version_and_encoding(message):
+def detect_span_version_and_encoding(message):  # type: (bytes) -> Encoding
     """Returns the span type and encoding for the message provided.
 
     The logic in this function is a Python port of
     https://github.com/openzipkin/zipkin/blob/master/zipkin/src/main/java/zipkin/internal/DetectingSpanDecoder.java
 
     :param message: span to perform operations on.
-    :type message: byte array
     :returns: span encoding.
-    :rtype: Encoding
     """
     # In case message is sent in as non-bytearray format,
     # safeguard convert to bytearray before handling
@@ -70,6 +69,7 @@ def detect_span_version_and_encoding(message):
 
 
 def convert_spans(spans, output_encoding, input_encoding=None):
+    # type: (bytes, Encoding, Optional[Encoding]) -> bytes
     """Converts encoded spans to a different encoding.
 
     param spans: encoded input spans.

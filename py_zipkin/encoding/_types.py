@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from enum import Enum
+from typing import Dict
 
 
 class Encoding(Enum):
@@ -17,3 +18,8 @@ class Kind(Enum):
     PRODUCER = 'PRODUCER'
     CONSUMER = 'CONSUMER'
     LOCAL = None
+
+
+# Convenience typedefs for tags and annotations
+Tags = Dict[str, str]
+Annotations = Dict[str, float]
