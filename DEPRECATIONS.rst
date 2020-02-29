@@ -1,5 +1,5 @@
 Deprecations: how to migrate
-============================
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 New Tracer interface
 --------------------
@@ -22,7 +22,7 @@ dropped spans or memory leaks.
 - `py_zipkin.thread_local.push_zipkin_attrs`
 
 To access the current zipkin_attrs
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+----------------------------------
 
 .. code-block:: python
 
@@ -32,7 +32,7 @@ To access the current zipkin_attrs
     get_default_tracer().push_zipkin_attrs(zipkin_attrs)
 
 To override the default tracer and provide your own in a multi-threaded env
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---------------------------------------------------------------------------
 
 You can instantiate your own Tracer instance and pass it to ALL your zipkin_span
 context managers and decorators. You'll need to propagate the tracer around on
