@@ -14,7 +14,7 @@ install:
 install-hooks:
 	tox -e pre-commit -- install -f --install-hooks
 
-test: install-hooks
+test:
 	tox
 
 .PHONY: tests

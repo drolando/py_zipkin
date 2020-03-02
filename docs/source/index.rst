@@ -27,4 +27,4 @@ Install
    multithreading
    changes
 
-   Gihub repo <https://github.com/Yelp/py_zipkin>
+   Github repo <https://github.com/Yelp/py_zipkin>

@@ -117,7 +117,7 @@ class Stack(object):
     It offers the operations push, pop and get.
     The latter two return None if the stack is empty.
 
-    .. deprecated::
+    .. deprecated:: 0.18.0
        Use the Tracer interface which offers better multi-threading support.
        Stack will be removed in version 1.0.
     """
@@ -155,7 +155,7 @@ class ThreadLocalStack(Stack):
     instantiated the class.
     Every instance shares the same thread local data.
 
-    .. deprecated::
+    .. deprecated:: 0.18.0
        Use the Tracer interface which offers better multi-threading support.
        ThreadLocalStack will be removed in version 1.0.
     """
@@ -174,7 +174,7 @@ class ThreadLocalStack(Stack):
 class SpanStorage(deque):
     """Stores the list of completed spans ready to be sent.
 
-    .. deprecated::
+    .. deprecated:: 0.18.0
        Use the Tracer interface which offers better multi-threading support.
        SpanStorage will be removed in version 1.0.
     """

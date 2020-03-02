@@ -40,8 +40,9 @@ to control the output encoding. Its value needs to be one of
 Convert encoded spans between formats
 -------------------------------------
 
-py_zipkin provides some helper functions to convert between encodings. They work
-on already encoded spans so they're meant to be used
+py_zipkin provides some helper functions to convert between encodings. They are
+useful if you have old instrumentations still emitting data in a different format
+and you wish to convert those spans to the new format after they've been generated.
 
 .. autofunction:: py_zipkin.encoding.convert_spans
 

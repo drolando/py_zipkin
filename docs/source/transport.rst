@@ -9,6 +9,16 @@ py_zipkin has a pluggable transport layer, which allows you to use your own
 transport implementation. py_zipkin provides some examples, however they're not
 production ready so you're advised to write your own.
 
+HTTP transport example
+~~~~~~~~~~~~~~~~~~~~~~
+
+The simplest way to get spans to the collector is via HTTP POST.
+py_zipkin includes a simple HTTP transport that you can use for testing or when
+trying out zipkin. However it's not production ready, so we suggest you to write
+your own transport.
+
+.. autoclass:: py_zipkin.transport.SimpleHTTPTransport
+
 Implement a new transport
 -------------------------
 
@@ -27,38 +37,11 @@ bigger than 1MB.
 
 .. note::
     Older versions of py_zipkin suggested implementing the transport handler as a
-    function with a single argument. That's still supported and should work with
-    the current py_zipkin version, but it's deprecated.
+    function with a single argument. That should still work with the current
+    py_zipkin version, but it's deprecated and will be removed in 1.0.
 
 .. autoclass:: py_zipkin.transport.BaseTransportHandler
    :members:
-
-HTTP transport example
-~~~~~~~~~~~~~~~~~~~~~~
-
-The simplest way to get spans to the collector is via HTTP POST.
-Here's an example of a simple HTTP transport using the requests library.
-This assumes your Zipkin collector is running at `localhost:9411`.
-
-.. code-block:: python
-
-   import requests
-
-   from py_zipkin.transport import BaseTransportHandler
-
-
-   class HttpTransport(BaseTransportHandler):
-
-      def get_max_payload_bytes(self):
-         return None
-
-      def send(self, encoded_spans):
-         # The collector expects a thrift-encoded list of spans.
-         requests.post(
-               'http://localhost:9411/api/v1/spans',
-               data=encoded_spans,
-               headers={'Content-Type': 'application/x-thrift'},
-         )
 
 Kafka transport example
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -95,5 +78,7 @@ being sampled and you actually need to send those spans. If the trace is not
 sampled it won't be called at all. So there's no need for you to implement any
 sampling in the transport.
 
-If defined, `firehose_handler` instead will be called for every trace. Even if it's
-not sampled.
+If defined, `firehose_handler` instead will be called for every trace, even if it's
+not sampled. Having 2 different transports for firehose mode and "sampled" mode
+allows you to send the 2 kinds of traces to different clusters and even to use a
+different transport mechanism for each if you want.
